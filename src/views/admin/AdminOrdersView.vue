@@ -176,25 +176,26 @@ const getStatusOptions = (order) => {
 
 const handleStatusUpdate = async (orderId, newStatus) => {
   if (!confirm(`確定將訂單 #${orderId} 的狀態更新為 [${displayStatus(newStatus)}] 嗎？`)) {
-    // 如果取消，將 select 恢復到當前狀態 (需要 DOM 操作，但 Vue 中通常靠 v-model 數據更新，這裡先簡單處理)
+    // 這裡建議重新 fetch 一次，把選單跳回原本的狀態，不然 UI 會卡在錯誤的選項
+    fetchOrders();
     return;
   }
 
-  // 鎖定 UI 避免重複操作，這裡使用訂單狀態本身的標記即可
-
   try {
-    const response = await AdminOrderService.updateOrderStatus(orderId, newStatus);
+    // 🌟 關鍵修正：加上 .toUpperCase() 傳送給後端
+    const response = await AdminOrderService.updateOrderStatus(orderId, newStatus.toUpperCase());
 
-    // 在本地更新訂單列表，避免重新載入整個列表
     const index = orders.value.findIndex(o => o.orderId === orderId);
     if (index !== -1) {
-      orders.value[index] = response.data; // 替換為後端返回的最新訂單實體
+      orders.value[index] = response.data;
     }
 
     alert(`訂單 #${orderId} 狀態已成功更新為 ${displayStatus(newStatus)}！`);
   } catch (err) {
-    error.value = err.response?.data?.message || `更新訂單 #${orderId} 狀態失敗。`;
-    // 建議這裡重新 fetch 一次，以確保數據同步
+    // 如果後端還沒部署好 DELIVERED，這裡會報錯
+    const msg = err.response?.data?.message || err.response?.data || '後端 Enum 匹配失敗';
+    error.value = `更新失敗：${msg}`;
+    alert(`更新失敗！可能是後端不認識 [${newStatus.toUpperCase()}] 狀態`);
     fetchOrders();
     console.error('Status update failed:', err);
   }
