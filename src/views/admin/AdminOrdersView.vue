@@ -142,7 +142,8 @@ const filteredOrders = computed(() => {
 });
 
 // 根據當前狀態獲取下一個可選的狀態選項
-const getStatusOptions = (currentStatus) => {
+const getStatusOptions = (order) => {
+  if (!order || !order.status) return {}; // 防呆
   const status = order.status.toLowerCase();
   const method = order.paymentMethod.toLowerCase();
 
