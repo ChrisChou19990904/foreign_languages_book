@@ -81,6 +81,7 @@ const statusMap = {
   pending: '待付款',
   paid: '已付款',
   shipped: '已出貨',
+  delivered: '已抵達', // 👈 新增這個
   done: '已完成',
   cancelled: '已取消',
 };
@@ -93,8 +94,8 @@ const statusFlow = {
   // 2. 已付款：只能變更為已出貨，移除「取消訂單」選項 🌟
   paid: { paid: '已付款', shipped: '設為已出貨' },
 
-  // 3. 已出貨：只能變更為已完成
-  shipped: { shipped: '已出貨', done: '設為已完成' },
+  shipped: { shipped: '已出貨', delivered: '設為已抵達' }, // 👈 修改這裡
+  delivered: { delivered: '已抵達', done: '設為已完成' }, // 👈 新增這行
 
   // 4. 已完成 & 已取消：維持現狀 (Select 已在 HTML 被 disabled)
   done: { done: '已完成' },
