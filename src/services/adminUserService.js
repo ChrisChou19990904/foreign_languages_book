@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/admin/users';
+// 1. 定義基礎網址
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://foreign-languages-book-back-end-8.onrender.com/api';
+
+// 2. 定義 Admin 專用的網址
+const ADMIN_API_URL = `${API_BASE_URL}/admin/users`;
 
 export default {
     /**
@@ -8,7 +12,7 @@ export default {
      */
     async getAllUsers() {
         const token = localStorage.getItem('token');
-        return await axios.get(API_URL, {
+        return await axios.get(ADMIN_API_URL, { // ✅ 使用 ADMIN_API_URL
             headers: { Authorization: `Bearer ${token}` }
         });
     },
@@ -18,7 +22,8 @@ export default {
      */
     async toggleUserActive(userId) {
         const token = localStorage.getItem('token');
-        return await axios.patch(`${API_URL}/${userId}/toggle-active`, {}, {
+        // 🚨 修正：原稿寫 API_URL，應改為 ADMIN_API_URL
+        return await axios.patch(`${ADMIN_API_URL}/${userId}/toggle-active`, {}, {
             headers: { Authorization: `Bearer ${token}` }
         });
     },
@@ -28,7 +33,8 @@ export default {
      */
     async updateUserRole(userId, roleName) {
         const token = localStorage.getItem('token');
-        return await axios.patch(`${API_URL}/${userId}/role`,
+        // 🚨 修正：原稿寫 API_URL，應改為 ADMIN_API_URL
+        return await axios.patch(`${ADMIN_API_URL}/${userId}/role`,
             { role: roleName },
             { headers: { Authorization: `Bearer ${token}` } }
         );
