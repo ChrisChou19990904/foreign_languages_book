@@ -430,6 +430,8 @@ watch(() => route.params.id, (newId) => {
 .book-description p {
   line-height: 1.6;
   color: #444;
+  /* 🌟 加入這一行，讓 \n 換行符號生效 */
+  white-space: pre-line;
 }
 
 /* 狀態訊息 */
@@ -453,6 +455,7 @@ watch(() => route.params.id, (newId) => {
 .review-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
 .user-name { font-weight: bold; color: #555; }
 .stars { color: #f39c12; }
-.review-text { color: #333; line-height: 1.6; }
+.review-text { color: #333; line-height: 1.6; /* 🌟 同樣加上這一行，讓讀者的換行也能顯示出來 */
+  white-space: pre-line;}
 .review-date { font-size: 0.85em; color: #999; }
 </style>
