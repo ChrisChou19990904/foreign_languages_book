@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// ✅ 修正：優先讀取環境變數，如果沒有則連向 Render 網址 (備援)
+// ✅ 使用環境變數，確保 Vercel 能連到 Render
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://foreign-languages-book-back-end-8.onrender.com/api';
 
 export default {
