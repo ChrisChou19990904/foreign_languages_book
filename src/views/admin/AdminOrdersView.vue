@@ -145,14 +145,17 @@ const getStatusOptions = (order) => {
   if (!order || !order.status) return {};
 
   const status = order.status.toLowerCase();
-  // 加上防呆，避免 paymentMethod 是 undefined 時報錯
-  const method = order.paymentMethod ? order.paymentMethod.toLowerCase() : 'credit_card';
+  // 🌟 修改這裡：印出來看看到底後端給了什麼字
+  console.log(`訂單 #${order.orderId} 的付款方式是:`, order.paymentMethod);
 
-  // 1. 貨到付款流程 (先出貨 -> 抵達時收錢)
-  if (method === 'cod') {
+  const method = order.paymentMethod ? order.paymentMethod.toUpperCase() : '';
+
+  // 🌟 這裡判斷「只要不是信用卡，就走貨到付款流程」或者精確比對
+  // 包含 cod 或 CASH_ON_DELIVERY
+  if (method === 'COD' || method === 'CASH_ON_DELIVERY') {
     const codFlow = {
       pending: { pending: '待處理', shipped: '設為已出貨', cancelled: '取消訂單' },
-      shipped: { shipped: '已出貨', delivered: '設為已抵達 (買家已付現)' },
+      shipped: { shipped: '已出貨', delivered: '設為已抵達 (簽收收錢)' },
       delivered: { delivered: '已抵達', done: '設為已完成' },
       done: { done: '已完成' },
       cancelled: { cancelled: '已取消' }
@@ -160,7 +163,7 @@ const getStatusOptions = (order) => {
     return codFlow[status] || {};
   }
 
-  // 2. 信用卡流程 (先付款 -> 再出貨 -> 最後抵達)
+  // 預設走信用卡流程
   const generalFlow = {
     pending: { pending: '待付款', paid: '設為已付款', cancelled: '取消訂單' },
     paid: { paid: '已付款', shipped: '設為已出貨' },
@@ -230,7 +233,10 @@ const getStatusClass = (status) => {
 };
 
 const displayPaymentMethod = (method) => {
-  return method.toLowerCase() === 'credit_card' ? '信用卡' : '貨到付款';
+  if (!method) return '未知';
+  const m = method.toUpperCase();
+  if (m === 'COD' || m === 'CASH_ON_DELIVERY') return '貨到付款';
+  return '信用卡';
 }
 
 onMounted(fetchOrders);
