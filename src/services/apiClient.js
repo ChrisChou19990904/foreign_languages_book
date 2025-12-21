@@ -2,7 +2,8 @@ import axios from 'axios';
 import { useAuthStore } from '@/stores/auth'; // 假設您使用 Pinia
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost:8080/api', // 確保這個 baseURL 是正確的
+    // ✅ 優先讀取 Vercel 的環境變數，沒有則連向 Render
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://foreign-languages-book-back-end-8.onrender.com/api',
     headers: {
         'Content-Type': 'application/json'
     }
