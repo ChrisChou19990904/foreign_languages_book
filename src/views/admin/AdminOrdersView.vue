@@ -175,29 +175,29 @@ const getStatusOptions = (order) => {
 // --- 狀態更新操作 ---
 
 const handleStatusUpdate = async (orderId, newStatus) => {
+  // 1. 強制轉換成大寫，這能對應 Java Enum
+  const statusPayload = newStatus.trim().toUpperCase();
+
   if (!confirm(`確定將訂單 #${orderId} 的狀態更新為 [${displayStatus(newStatus)}] 嗎？`)) {
-    // 這裡建議重新 fetch 一次，把選單跳回原本的狀態，不然 UI 會卡在錯誤的選項
-    fetchOrders();
+    fetchOrders(); // 復原選單狀態
     return;
   }
 
   try {
-    // 🌟 關鍵修正：加上 .toUpperCase() 傳送給後端
-    const response = await AdminOrderService.updateOrderStatus(orderId, newStatus.toUpperCase());
+    // 2. 呼叫 API，確保傳過去的是大寫
+    const response = await AdminOrderService.updateOrderStatus(orderId, statusPayload);
 
+    // 3. 更新本地資料
     const index = orders.value.findIndex(o => o.orderId === orderId);
     if (index !== -1) {
       orders.value[index] = response.data;
     }
-
-    alert(`訂單 #${orderId} 狀態已成功更新為 ${displayStatus(newStatus)}！`);
+    alert(`訂單 #${orderId} 狀態已成功更新！`);
   } catch (err) {
-    // 如果後端還沒部署好 DELIVERED，這裡會報錯
-    const msg = err.response?.data?.message || err.response?.data || '後端 Enum 匹配失敗';
-    error.value = `更新失敗：${msg}`;
-    alert(`更新失敗！可能是後端不認識 [${newStatus.toUpperCase()}] 狀態`);
+    console.error('更新失敗詳情:', err.response?.data);
+    // 這裡會顯示後端報錯的具體原因，幫助我們判斷
+    alert(`更新失敗：${err.response?.data || '後端版本可能尚未同步'}`);
     fetchOrders();
-    console.error('Status update failed:', err);
   }
 };
 
