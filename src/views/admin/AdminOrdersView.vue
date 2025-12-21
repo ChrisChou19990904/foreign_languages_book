@@ -151,14 +151,25 @@ const getStatusOptions = (order) => {
   if (method === 'cod') {
     const codFlow = {
       pending: { pending: '待處理', shipped: '設為已出貨', cancelled: '取消訂單' },
-      shipped: { shipped: '已出貨', paid: '設為已付款 (收到款項)' }, // 司機收錢後變 Paid
+      shipped: { shipped: '已出貨', delivered: '設為已抵達' },
+      delivered: { delivered: '已抵達', paid: '設為已付款 (收到款項)' },
       paid: { paid: '已付款', done: '設為已完成' },
       done: { done: '已完成' },
       cancelled: { cancelled: '已取消' }
     };
     return codFlow[status] || {};
   }
-  return statusFlow[currentStatus.toLowerCase()] || {};
+
+  // 否則回傳原本的通用流程 (記得加入 delivered)
+  const generalFlow = {
+    pending: { pending: '待付款', paid: '設為已付款', cancelled: '取消訂單' },
+    paid: { paid: '已付款', shipped: '設為已出貨' },
+    shipped: { shipped: '已出貨', delivered: '設為已抵達' },
+    delivered: { delivered: '已抵達', done: '設為已完成' },
+    done: { done: '已完成' },
+    cancelled: { cancelled: '已取消' },
+  };
+  return generalFlow[status] || {};
 };
 
 // --- 狀態更新操作 ---
