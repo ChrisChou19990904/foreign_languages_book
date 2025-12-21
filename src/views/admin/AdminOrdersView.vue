@@ -49,9 +49,9 @@
                 :value="order.status.toLowerCase()"
                 :disabled="['done', 'cancelled'].includes(order.status.toLowerCase())"
             >
-              <option v-for="(name, status) in getStatusOptions(order.status)"
-                      :key="status"
-                      :value="status">
+              <option v-for="(name, statusValue) in getStatusOptions(order)"
+                      :key="statusValue"
+                      :value="statusValue">
                 {{ name }}
               </option>
             </select>
@@ -142,6 +142,20 @@ const filteredOrders = computed(() => {
 
 // 根據當前狀態獲取下一個可選的狀態選項
 const getStatusOptions = (currentStatus) => {
+  const status = order.status.toLowerCase();
+  const method = order.paymentMethod.toLowerCase();
+
+  // 如果是貨到付款 (COD)
+  if (method === 'cod') {
+    const codFlow = {
+      pending: { pending: '待處理', shipped: '設為已出貨', cancelled: '取消訂單' },
+      shipped: { shipped: '已出貨', paid: '設為已付款 (收到款項)' }, // 司機收錢後變 Paid
+      paid: { paid: '已付款', done: '設為已完成' },
+      done: { done: '已完成' },
+      cancelled: { cancelled: '已取消' }
+    };
+    return codFlow[status] || {};
+  }
   return statusFlow[currentStatus.toLowerCase()] || {};
 };
 
