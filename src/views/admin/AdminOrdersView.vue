@@ -155,7 +155,7 @@ const getStatusOptions = (order) => {
   if (method === 'COD' || method === 'CASH_ON_DELIVERY') {
     const codFlow = {
       pending: { pending: '待處理', shipped: '設為已出貨', cancelled: '取消訂單' },
-      shipped: { shipped: '已出貨', delivered: '設為已抵達 (簽收收錢)' },
+      shipped: { shipped: '已出貨', delivered: '設為已抵達 (通知收件人去取貨)' },
       delivered: { delivered: '已抵達', done: '設為已完成' },
       done: { done: '已完成' },
       cancelled: { cancelled: '已取消' }
