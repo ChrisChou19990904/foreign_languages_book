@@ -141,26 +141,26 @@ const filteredOrders = computed(() => {
   return result;
 });
 
-// 根據當前狀態獲取下一個可選的狀態選項
 const getStatusOptions = (order) => {
-  if (!order || !order.status) return {}; // 防呆
-  const status = order.status.toLowerCase();
-  const method = order.paymentMethod.toLowerCase();
+  if (!order || !order.status) return {};
 
-  // 如果是貨到付款 (COD)
+  const status = order.status.toLowerCase();
+  // 加上防呆，避免 paymentMethod 是 undefined 時報錯
+  const method = order.paymentMethod ? order.paymentMethod.toLowerCase() : 'credit_card';
+
+  // 1. 貨到付款流程 (先出貨 -> 抵達時收錢)
   if (method === 'cod') {
     const codFlow = {
       pending: { pending: '待處理', shipped: '設為已出貨', cancelled: '取消訂單' },
-      shipped: { shipped: '已出貨', delivered: '設為已抵達' },
-      delivered: { delivered: '已抵達', paid: '設為已付款 (收到款項)' },
-      paid: { paid: '已付款', done: '設為已完成' },
+      shipped: { shipped: '已出貨', delivered: '設為已抵達 (買家已付現)' },
+      delivered: { delivered: '已抵達', done: '設為已完成' },
       done: { done: '已完成' },
       cancelled: { cancelled: '已取消' }
     };
     return codFlow[status] || {};
   }
 
-  // 否則回傳原本的通用流程 (記得加入 delivered)
+  // 2. 信用卡流程 (先付款 -> 再出貨 -> 最後抵達)
   const generalFlow = {
     pending: { pending: '待付款', paid: '設為已付款', cancelled: '取消訂單' },
     paid: { paid: '已付款', shipped: '設為已出貨' },
