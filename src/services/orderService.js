@@ -35,13 +35,12 @@ const OrderService = {
         return apiClient.get(`/user/orders`);
     },
 // 🌟 新增這個方法
+    // 🌟 修正後的 completePayment
     completePayment(orderId) {
-        const token = localStorage.getItem('token');
-        return axios.patch(`/api/user/orders/${orderId}/complete-payment`, {}, {
-            headers: {
-                'Authorization': `Bearer ${token}` // 🌟 手動塞入識別證
-            }
-        });
+        // 1. 使用 apiClient，它會自動補上 https://...onrender.com/api
+        // 2. 因為 apiClient 已經有 baseURL: '.../api'，所以這裡只需寫剩下的路徑
+        // 3. 攔截器會自動幫你帶上 Authorization Token，不用手動寫 headers
+        return apiClient.patch(`/user/orders/${orderId}/complete-payment`);
     },
     /**
      * 獲取單筆訂單詳情 (會員只能查看自己的訂單)
