@@ -1,9 +1,9 @@
 import axios from 'axios';
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://foreign-languages-book-back-end-8.onrender.com/api';
 // 設置 API 基礎路徑
 // 部署後可能需要修改為您的 Spring Boot 服務器地址
 const apiClient = axios.create({
-    baseURL: 'http://localhost:8080/api',
+    baseURL: API_BASE_URL,
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
