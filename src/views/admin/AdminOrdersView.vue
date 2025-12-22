@@ -79,6 +79,7 @@ const filterStatus = ref(''); // 用於下拉選單篩選
 // 狀態映射表 (用於顯示)
 const statusMap = {
   pending: '待付款',
+  awaiting_payment: '待支付確認', // 👈 必須補上這行
   paid: '已付款',
   shipped: '已出貨',
   delivered: '已抵達', // 👈 新增這個
@@ -145,17 +146,13 @@ const getStatusOptions = (order) => {
   if (!order || !order.status) return {};
 
   const status = order.status.toLowerCase();
-  // 🌟 修改這裡：印出來看看到底後端給了什麼字
-  console.log(`訂單 #${order.orderId} 的付款方式是:`, order.paymentMethod);
-
   const method = order.paymentMethod ? order.paymentMethod.toUpperCase() : '';
 
-  // 🌟 這裡判斷「只要不是信用卡，就走貨到付款流程」或者精確比對
-  // 包含 cod 或 CASH_ON_DELIVERY
+  // 1. 貨到付款流程
   if (method === 'COD' || method === 'CASH_ON_DELIVERY') {
     const codFlow = {
       pending: { pending: '待處理', shipped: '設為已出貨', cancelled: '取消訂單' },
-      shipped: { shipped: '已出貨', delivered: '設為已抵達 (通知收件人去取貨)' },
+      shipped: { shipped: '已出貨', delivered: '設為已抵達' },
       delivered: { delivered: '已抵達', done: '設為已完成' },
       done: { done: '已完成' },
       cancelled: { cancelled: '已取消' }
@@ -163,16 +160,18 @@ const getStatusOptions = (order) => {
     return codFlow[status] || {};
   }
 
-  // 預設走信用卡流程
-  const generalFlow = {
-    pending: { pending: '待付款', paid: '設為已付款', cancelled: '取消訂單' },
+  // 2. 信用卡流程 (將原本放在下面的 creditFlow 移到回傳位置)
+  const creditFlow = {
+    pending: { pending: '待付款', awaiting_payment: '進入支付跳轉', cancelled: '取消訂單' },
+    awaiting_payment: { awaiting_payment: '待支付確認', cancelled: '支付超時/取消' },
     paid: { paid: '已付款', shipped: '設為已出貨' },
     shipped: { shipped: '已出貨', delivered: '設為已抵達' },
     delivered: { delivered: '已抵達', done: '設為已完成' },
     done: { done: '已完成' },
     cancelled: { cancelled: '已取消' },
   };
-  return generalFlow[status] || {};
+
+  return creditFlow[status] || {}; // 🎯 這裡改回傳 creditFlow
 };
 
 // --- 狀態更新操作 ---

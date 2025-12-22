@@ -98,11 +98,13 @@ const updateError = ref(null);
 // 獲取路由中的訂單 ID
 const orderId = computed(() => route.params.id);
 
-// 狀態映射表
+// 狀態映射表 (用於顯示)
 const statusMap = {
   pending: '待付款',
+  awaiting_payment: '待支付確認', // 👈 新增
   paid: '已付款',
   shipped: '已出貨',
+  delivered: '已抵達',           // 👈 新增
   done: '已完成',
   cancelled: '已取消',
 };
@@ -208,22 +210,55 @@ const displayStatus = (status) => {
 };
 
 const getStatusClass = (status) => {
-  switch (status.toLowerCase()) {
+  const s = status.toLowerCase();
+  switch (s) {
     case 'paid': return 'status-paid';
     case 'shipped': return 'status-shipped';
+    case 'delivered': return 'status-shipped'; // 沿用出貨顏色
     case 'done': return 'status-done';
     case 'pending': return 'status-pending';
+    case 'awaiting_payment': return 'status-pending'; // 👈 新增顏色
     case 'cancelled': return 'status-cancelled';
     default: return '';
   }
 };
 
 const displayPaymentMethod = (method) => {
-  return method.toLowerCase() === 'credit_card' ? '信用卡' : '貨到付款';
+  if (!method) return '未知';
+  const m = method.toLowerCase();
+  return m === 'credit_card' ? '信用卡' : '貨到付款';
 }
 
 const getStatusOptions = (currentStatus) => {
-  return statusFlow[currentStatus.toLowerCase()] || {};
+  if (!order.value || !currentStatus) return {};
+
+  const status = currentStatus.toLowerCase();
+  const method = order.value.paymentMethod ? order.value.paymentMethod.toUpperCase() : '';
+
+  // 1. 貨到付款流程
+  if (method === 'COD' || method === 'CASH_ON_DELIVERY') {
+    const codFlow = {
+      pending: { pending: '待處理', shipped: '設為已出貨', cancelled: '取消訂單' },
+      shipped: { shipped: '已出貨', delivered: '設為已抵達' },
+      delivered: { delivered: '已抵達', done: '設為已完成' },
+      done: { done: '已完成' },
+      cancelled: { cancelled: '已取消' }
+    };
+    return codFlow[status] || {};
+  }
+
+  // 2. 信用卡流程
+  const creditFlow = {
+    pending: { pending: '待付款', awaiting_payment: '進入支付跳轉', cancelled: '取消訂單' },
+    awaiting_payment: { awaiting_payment: '待支付確認', cancelled: '支付失敗/取消' },
+    paid: { paid: '已付款', shipped: '設為已出貨' },
+    shipped: { shipped: '已出貨', delivered: '設為已抵達' },
+    delivered: { delivered: '已抵達', done: '設為已完成' },
+    done: { done: '已完成' },
+    cancelled: { cancelled: '已取消' },
+  };
+
+  return creditFlow[status] || {};
 };
 
 // --- 生命週期 ---

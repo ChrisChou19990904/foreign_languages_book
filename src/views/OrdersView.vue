@@ -106,6 +106,8 @@ const formatDate = (dateString) => {
 const displayStatus = (status) => {
   const statusMap = {
     pending: '待付款',
+    awaiting_payment: '待支付確認', // 👈 新增
+    processing: '金流處理中',       // 👈 新增
     paid: '已付款',
     shipped: '已出貨',
     done: '已完成',
@@ -120,6 +122,8 @@ const displayStatus = (status) => {
  */
 const getStatusClass = (status) => {
   switch (status.toLowerCase()) {
+    case 'awaiting_payment':
+    case 'processing': return 'status-warning';
     case 'paid': return 'status-paid';
     case 'shipped': return 'status-shipped';
     case 'done': return 'status-done';
