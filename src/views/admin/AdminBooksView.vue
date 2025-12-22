@@ -98,6 +98,7 @@ const LANGUAGE_OPTIONS = [
   { value: 'KOREAN', label: '韓語' },
   { value: 'FRENCH', label: '法語' },
   { value: 'SPANISH', label: '西班牙語' },
+  { value: 'PORTUGUESE', label: '葡萄牙語' },
   { value: 'GERMAN', label: '德語' },
   { value: 'ITALIAN', label: '義大利語' },
   { value: 'RUSSIAN', label: '俄羅斯語' },

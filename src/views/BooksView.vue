@@ -21,6 +21,8 @@
 
           <option value="spanish">西班牙文</option>
 
+        <option value="portuguese">葡萄牙文</option>
+
           <option value="french">法文</option>
 
           <option value="german">德文</option>
