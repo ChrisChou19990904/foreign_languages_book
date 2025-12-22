@@ -26,9 +26,14 @@
         <div class="info-block">
           <h3>💰 支付資訊</h3>
           <p><strong>付款方式:</strong> {{ displayPaymentMethod(order.paymentMethod) }}</p>
-          <p><strong>商品總價:</strong> NT$ {{ order.totalPrice }}</p>
-          <p><strong>運費:</strong> NT$ 60</p>
-          <p class="grand-total"><strong>應付總金額:</strong> NT$ {{ order.totalPrice+60 }}</p>
+          <p><strong>應付總金額:</strong> NT$ {{ (order.totalPrice + 60).toFixed(0) }}</p>
+
+          <div v-if="['pending', 'awaiting_payment'].includes(order.status.toLowerCase())" class="payment-retry-section">
+            <p class="payment-hint">尚未完成支付？</p>
+            <router-link :to="`/payment/${order.orderId}`" class="repay-btn">
+              重新前往支付頁面 →
+            </router-link>
+          </div>
         </div>
       </div>
 

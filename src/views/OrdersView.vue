@@ -39,6 +39,14 @@
           <router-link :to="`/orders/${order.orderId}`" class="detail-link">
             查看詳情 →
           </router-link>
+
+          <router-link
+              v-if="['pending', 'awaiting_payment'].includes(order.status.toLowerCase())"
+              :to="`/payment/${order.orderId}`"
+              class="pay-now-btn"
+          >
+            立即付款 💳
+          </router-link>
         </div>
       </div>
     </div>
