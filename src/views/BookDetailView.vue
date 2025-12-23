@@ -37,11 +37,14 @@
                 @change="validateQuantity"
             />
             <button
+                v-if="book && book.stock > 0"
                 @click="handleAddToCart"
-                :disabled="isAddingToCart || quantity <= 0 || quantity > book.stock"
-                class="add-to-cart-btn"
+                :disabled="isAddingToCart || isBookInCart(book.bookId)"
+                :class="['cart-btn', { 'btn-in-cart': isBookInCart(book.bookId) }]"
             >
-              {{ isAddingToCart ? '加入中...' : '加入購物車' }}
+              <span v-if="isAddingToCart">處理中...</span>
+              <span v-else-if="isBookInCart(book.bookId)">✅ 已在購物車</span>
+              <span v-else>🛒 加入購物車</span>
             </button>
             <div v-if="cartMessage" :class="{ 'error-message': cartError, 'success-message': !cartError }" class="cart-msg">
               {{ cartMessage }}
