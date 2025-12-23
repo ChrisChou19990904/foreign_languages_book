@@ -61,7 +61,14 @@
             庫存: {{ book.stock > 0 ? book.stock : '售罄' }}
           </p>
           <button @click="viewDetail(book.bookId)" class="detail-btn">查看詳情</button>
-          <button v-if="book.stock > 0" @click="addToCart(book)" class="cart-btn">加入購物車</button>
+          <button
+              v-if="book.stock > 0"
+              @click="addToCart(book)"
+              :class="['cart-btn', { 'btn-in-cart': isBookInCart(book.bookId) }]"
+              :disabled="isBookInCart(book.bookId)"
+          >
+            {{ isBookInCart(book.bookId) ? '已在購物車' : '加入購物車' }}
+          </button>
         </div>
       </div>
     </div>
@@ -69,13 +76,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue'; // 🎯 引入 computed
 import { useRouter } from 'vue-router';
-import BookService from '@/services/bookService'; // 引入上面定義的服務
-import { useAuthStore } from '@/stores/auth'; // 假設您需要登入狀態來處理購物車
-import CartService from '@/services/cartService';
+import BookService from '@/services/bookService';
+import { useAuthStore } from '@/stores/auth';
+import { useCartStore } from '@/stores/cart'; // 🎯 改為使用 Store，移除單獨的 CartService 引入
 const router = useRouter();
 const authStore = useAuthStore();
+const cartStore = useCartStore(); // 🎯 初始化 CartStore
 
 const books = ref([]);
 const searchKeyword = ref('');
@@ -87,29 +95,24 @@ let searchTimeout = null;
 
 // --- 核心邏輯 ---
 
+// 🎯 判斷書籍是否已在購物車 (用於按鈕狀態控制)
+const isBookInCart = (bookId) => {
+  return cartStore.items.some(item => item.book.bookId === bookId);
+};
+
 const fetchBooks = async () => {
   isLoading.value = true;
   error.value = null;
-
   try {
     let response;
-
     if (searchKeyword.value) {
-      // 優先使用搜索 API
       response = await BookService.searchBooks(searchKeyword.value);
-
     } else if (selectedLang.value !== 'all') {
-      // 如果沒有搜索關鍵字，則使用語言篩選 API
       response = await BookService.getBooksByLang(selectedLang.value);
-
     } else {
-      // 預設情況：搜索空關鍵字或使用某個預設語言 (此處我們假定搜索空關鍵字等同於獲取全部上架書籍)
-      // 注意: Spring Boot 的 searchBooks API 允許空關鍵字查詢所有
       response = await BookService.searchBooks('');
     }
-
     books.value = response.data;
-
   } catch (err) {
     error.value = '載入書籍列表失敗。' + (err.response?.data || '');
     console.error(err);
@@ -118,49 +121,42 @@ const fetchBooks = async () => {
   }
 };
 
-// 防抖函數：避免用戶每次輸入都發送請求
 const debounceSearch = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    // 當用戶停止輸入 300ms 後才執行搜索
     fetchBooks();
   }, 300);
 };
 
 const viewDetail = (bookId) => {
-  router.push(`/book/${bookId}`); // 導向單本書籍詳情頁
+  router.push(`/book/${bookId}`);
 };
 
-const addToCart = async (book) => { // 🎯 必須是 async 函式
+/**
+ * 🎯 修改後的 addToCart
+ * 配合親戚建議：將邏輯交給 Store 處理，確保重複加入時會彈出提醒
+ */
+const addToCart = async (book) => {
   if (!authStore.isAuthenticated) {
     alert('請先登入才能加入購物車！');
     router.push('/login');
     return;
   }
 
-  // 1. 檢查庫存 (雖然後端也會檢查，但前端先檢查可以提供更好的用戶體驗)
   if (book.stock <= 0) {
     alert('該書籍目前已售罄！');
     return;
   }
 
   try {
-    // 2. 呼叫後端 API
-    const payload = {
-      bookId: book.bookId,
-      quantity: 1, // 預設添加數量為 1
-    };
+    // 🌟 直接調用 cartStore 的 action
+    // 這樣會觸發我們在 cart.js 寫的 alert(`🛒 購物車已有此商品...`)
+    await cartStore.updateCartItem(book.bookId, 1);
 
-    await CartService.addOrUpdateCartItem(payload);
-
-    // 3. 成功後提示
-    alert(`✅ 書籍《${book.title}》已成功加入購物車！`);
-
-    // 🎯 建議：成功後導向購物車頁面，或刷新購物車數量標識
-    // router.push('/cart');
-
+    // 如果 updateCartItem 成功執行（且沒有被 alert 攔截返回）
+    // 只有在真正新增成功時，可以考慮給予成功的 Feedback
+    // 但因為 store 已經處理了 alert，這裡可以保持簡單
   } catch (err) {
-    // 4. 處理後端返回的錯誤（例如庫存不足、書籍不存在等）
     const serverMessage = err.response?.data || '加入購物車失敗，請稍後再試。';
     alert(`❌ 失敗：${serverMessage}`);
     console.error("Add to Cart Error:", err);
@@ -171,9 +167,12 @@ const addToCart = async (book) => { // 🎯 必須是 async 函式
 
 onMounted(() => {
   fetchBooks();
+  // 🎯 建議：掛載時也獲取一次最新的購物車狀態，確保按鈕狀態準確
+  if (authStore.isAuthenticated) {
+    cartStore.fetchCartItems();
+  }
 });
 
-// 當語言篩選變化時，重新獲取數據 (不需要防抖)
 watch(selectedLang, () => {
   if (!searchKeyword.value) {
     fetchBooks();
@@ -183,95 +182,37 @@ watch(selectedLang, () => {
 </script>
 
 <style scoped>
-/* 簡單的響應式網格樣式 */
-.books-view-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-.search-bar {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 30px;
-}
-.search-bar input, .search-bar select {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  flex-grow: 1;
-}
-/* 1. 調整卡片整體：讓它更有質感 */
+.books-view-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.search-bar { display: flex; gap: 15px; margin-bottom: 30px; }
+.book-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+
 .book-card {
-  border: 1px solid #eee; /* 邊框淡一點比較高級 */
-  border-radius: 12px;    /* 圓角稍微大一點 */
-  overflow: hidden;
+  border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  background-color: #fff;
   transition: transform 0.3s ease;
+  background: #fff;
 }
+.book-card:hover { transform: translateY(-5px); }
 
-.book-card:hover {
-  transform: translateY(-5px); /* 滑過時往上飄，增加互動感 */
-}
-
-/* 2. 核心修正：調整圖片呈現方式 */
 .book-image {
-  width: 100%;
-  height: 250px;        /* 高度可以稍微拉高一點，讓比例更像實體書 */
-  background-color: #fcfcfc; /* 給背景一個極淡的灰色，避免白色封面消失 */
-  padding: 15px;        /* 關鍵：留白可以讓整本書的邊界露出來 */
-
-  /* 💡 這是最重要的修改： */
-  object-fit: contain;  /* 確保「整張圖片」都縮放在格子內，絕不裁切 */
-
-  /* 加上陰影模擬實體書的厚度感 */
-  filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.15));
-
-  border-bottom: 1px solid #f0f0f0;
+  width: 100%; height: 250px; object-fit: contain;
+  padding: 15px; background: #fcfcfc;
 }
 
-/* 3. 調整資訊區塊 */
-.book-info {
-  padding: 15px;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.book-title {
-  font-size: 1.1em;
-  font-weight: 600;
-  margin-bottom: 8px;
-  height: 44px;         /* 保持兩行標題的高度 */
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2; /* 最多顯示兩行，超過顯示省略號 */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
 .detail-btn, .cart-btn {
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  width: 100%; padding: 10px; margin-top: 8px;
+  border: none; border-radius: 6px; cursor: pointer;
+  transition: all 0.2s;
 }
-.detail-btn {
-  background-color: #007bff;
-  color: white;
-}
-.cart-btn {
-  background-color: #28a745;
-  color: white;
-}
-.no-results, .loading-message, .error-message {
-  text-align: center;
-  padding: 20px;
-}
-.error-message {
-  color: red;
+
+.detail-btn { background: #007bff; color: white; }
+.cart-btn { background: #28a745; color: white; }
+
+/* 🎯 關鍵：禁用狀態樣式 */
+.cart-btn:disabled {
+  background-color: #e0e0e0 !important;
+  color: #888 !important;
+  cursor: not-allowed;
+  border: 1px solid #ccc;
 }
 </style>

@@ -7,6 +7,7 @@ import { useAuthStore } from './auth'; // 引入 Auth Store 檢查登入狀態
  * 購物車狀態 Store (Pinia)
  * 管理購物車明細列表、總數量和總價格。
  */
+// stores/cart.js
 export const useCartStore = defineStore('cart', {
     // 狀態 (State)
     state: () => ({
@@ -62,10 +63,22 @@ export const useCartStore = defineStore('cart', {
          * @param {number} bookId - 書籍 ID
          * @param {number} quantity - 期望更新後的數量 (總量)
          */
+        /**
+         * 🎯 修改後的邏輯：新增或更新購物車
+         */
         async updateCartItem(bookId, quantity) {
-            // 處理刪除情況：如果數量 <= 0，嘗試刪除
+            // 1. 檢查商品是否已在購物車中 (根據 bookId)
+            const existingItem = this.items.find(item => item.book.bookId === bookId);
+
+            // 2. 🎯 實踐親戚的建議：
+            // 如果商品已存在，且這次呼叫是來自「加入購物車」按鈕（通常 quantity 會傳 1 或目前的增量）
+            // 我們可以判斷：如果商品已存在，就彈出提醒並中止操作。
+            if (existingItem) {
+                alert(`🛒 購物車已有此商品！\n欲修改數量請至購物車頁面進行調整。`);
+                return; // 攔截操作，不發送 API 請求
+            }
+
             if (quantity <= 0) {
-                const existingItem = this.items.find(item => item.book.bookId === bookId);
                 if (existingItem) {
                     await this.deleteCartItem(existingItem.cartItemId);
                 }
@@ -77,14 +90,11 @@ export const useCartStore = defineStore('cart', {
                 const response = await CartService.addOrUpdateCartItem(payload);
                 const updatedItem = response.data;
 
-                // 更新 Pinia Store 中的 items (即時響應)
                 const index = this.items.findIndex(item => item.cartItemId === updatedItem.cartItemId);
 
                 if (index !== -1) {
-                    // 已存在，更新明細
                     this.items[index] = updatedItem;
                 } else {
-                    // 新增明細
                     this.items.push(updatedItem);
                 }
             } catch (error) {
