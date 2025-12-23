@@ -109,11 +109,12 @@ import BookService from '@/services/bookService';
 import CartService from '@/services/cartService'; // 假設已創建 CartService
 import { useAuthStore } from '@/stores/auth';
 import reviewService from '@/services/reviewService';
+import { useCartStore } from '@/stores/cart'; // 🎯 引入 Store
 // 🌟 1. 統一宣告 Router 和 Route
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
-
+const cartStore = useCartStore(); // 🎯 初始化
 const book = ref(null);
 const isLoading = ref(false);
 const error = ref(null);
@@ -121,6 +122,10 @@ const quantity = ref(1);
 const isAddingToCart = ref(false);
 const cartMessage = ref('');
 const cartError = ref(false);
+const isBookInCart = (bookId) => {
+  if (!bookId) return false;
+  return cartStore.items.some(item => item.book.bookId === bookId);
+};
 const LANGUAGE_MAP = {
   'ENGLISH': '英語',
   'JAPANESE': '日語',
@@ -235,40 +240,20 @@ const validateQuantity = () => {
 
 const handleAddToCart = async () => {
   if (!authStore.isAuthenticated) {
-    console.log("用戶未登入，準備導向 /login");
     alert('請先登入才能加入購物車！');
     router.push('/login');
     return;
   }
 
-  if (quantity.value <= 0 || quantity.value > book.value.stock) {
-    cartMessage.value = '請輸入有效的購買數量。';
-    cartError.value = true;
-    return;
-  }
-
+  // 🎯 2. 調用 Store 的 Action (取代直接用 CartService)
+  // 這樣才會觸發我們在 cart.js 寫的「重複加入 alert」
   isAddingToCart.value = true;
-  cartMessage.value = '';
-  cartError.value = false;
-
   try {
-    // 假設 CartService 存在，並呼叫 POST /api/user/cart
-    // 傳遞 bookId 和 quantity
-    const payload = {
-      bookId: book.value.bookId,
-      quantity: quantity.value,
-    };
+    // 這裡我們改用 cartStore 統一管理的 action
+    await cartStore.updateCartItem(book.value.bookId, quantity.value);
 
-    // TODO: 這裡需替換成您實際的 CartService 實作
-    await CartService.addOrUpdateCartItem(payload);
-
-    // 模擬成功的訊息
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    cartMessage.value = `成功將 ${quantity.value} 本《${book.value.title}》加入購物車！`;
-    alert(`✅ 成功將 ${quantity.value} 本《${book.value.title}》加入購物車！`);
-    cartError.value = false;
-
+    // 如果成功（且沒被 alert 攔截），可以給個簡單提示
+    // cartMessage.value = `成功加入購物車！`;
   } catch (err) {
     const serverMessage = err.response?.data?.message || err.response?.data || '加入購物車失敗。';
     cartMessage.value = serverMessage;
@@ -289,11 +274,16 @@ const isSubmitting = ref(false);
 
 // --- 生命週期 ---
 
-onMounted(() => {
+onMounted(async () => {
   fetchBookDetail(route.params.id);
-  fetchReviews(); // 初始化時載入評論
-});
+  fetchReviews();
 
+  // 🎯 3. 關鍵：進入詳情頁時，一定要確保購物車資料是最新的
+  // 這樣按鈕的 :disabled 狀態才會立刻生效
+  if (authStore.isAuthenticated) {
+    await cartStore.fetchCartItems();
+  }
+});
 // 監聽路由參數變化，當用戶直接在詳情頁切換書籍時重新載入
 watch(() => route.params.id, (newId) => {
   if (newId) {
