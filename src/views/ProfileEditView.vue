@@ -40,7 +40,7 @@
         />
       </div>
 
-      <div class="form-group password-hint">
+     <div class="form-group password-hint">
         如需修改密碼，請<router-link :to="{ name: 'ChangePassword' }">點此前往</router-link>。
       </div>
 

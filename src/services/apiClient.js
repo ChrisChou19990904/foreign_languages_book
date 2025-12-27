@@ -12,8 +12,9 @@ const apiClient = axios.create({
 // 請求攔截器：每次請求都加入 JWT
 apiClient.interceptors.request.use(config => {
     const authStore = useAuthStore();
-    const token = authStore.getToken; // 確保這裡能拿到 Token
-
+    // 🎯 修正：如果 Store 沒拿到，就去 localStorage 拿
+    const token = authStore.getToken || localStorage.getItem('token');
+    console.log("🛠️ 發送請求路徑:", config.url, "Token是否存在:", !!token); // 👈 加這行
     if (token) {
         config.headers['Authorization'] = `Bearer ${token}`; // 🎯 確保格式正確
     }

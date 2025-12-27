@@ -76,6 +76,12 @@ const routes = [
         name: 'BookDetail',
         component: () => import('@/views/BookDetailView.vue')
     },
+    {
+        path: '/profile/change-password',
+        name: 'ChangePassword',
+        component: () => import('@/views/ChangePasswordView.vue'),
+        meta: { requiresAuth: true }
+    },
 ];
 
 const router = createRouter({
