@@ -41,12 +41,16 @@
           </router-link>
 
           <router-link
-              v-if="['pending', 'awaiting_payment'].includes(order.status.toLowerCase())"
+              v-if="shouldShowPayButton(order)"
               :to="`/payment/${order.orderId}`"
               class="pay-now-btn"
           >
             立即付款 💳
           </router-link>
+
+          <span v-else-if="order.paymentMethod.toUpperCase() === 'CASH_ON_DELIVERY' && order.status.toLowerCase() === 'pending'" class="cod-tag">
+    🚚 貨到付現
+  </span>
         </div>
       </div>
     </div>
@@ -60,7 +64,24 @@ import OrderService from '@/services/orderService';
 const orders = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
+/**
+ * 判斷是否顯示「立即付款」按鈕
+ * @param {Object} order
+ */
+const shouldShowPayButton = (order) => {
+  if (!order || !order.status || !order.paymentMethod) return false;
 
+  const status = order.status.toLowerCase();
+  const method = order.paymentMethod.toUpperCase();
+
+  // 1. 狀態必須是待付款類別
+  const isAwaiting = ['pending', 'awaiting_payment'].includes(status);
+
+  // 2. 付款方式不能是貨到付款
+  const isNotCOD = method !== 'CASH_ON_DELIVERY';
+
+  return isAwaiting && isNotCOD;
+};
 /**
  * 獲取會員的歷史訂單列表
  */
