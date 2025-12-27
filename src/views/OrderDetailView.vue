@@ -28,14 +28,17 @@
           <p><strong>付款方式:</strong> {{ displayPaymentMethod(order.paymentMethod) }}</p>
           <p><strong>應付總金額:</strong> NT$ {{ (order.totalPrice + 60).toFixed(0) }}</p>
 
-          <div v-if="['pending', 'awaiting_payment'].includes(order.status.toLowerCase())" class="payment-retry-section">
+          <div v-if="isOnlinePaymentNeeded" class="payment-retry-section">
             <p class="payment-hint">尚未完成支付？</p>
             <router-link :to="`/payment/${order.orderId}`" class="repay-btn">
               重新前往支付頁面 →
             </router-link>
           </div>
+
+          <div v-if="order.paymentMethod.toLowerCase() === 'cod'" class="cod-hint">
+            <p class="payment-hint" style="color: #2c3e50;">ℹ️ 提醒：此訂單為貨到付款，請於收件時準備現金。</p>
+          </div>
         </div>
-      </div>
 
       <div class="item-list">
         <h3>🛒 訂單商品明細</h3>
@@ -141,7 +144,20 @@ const getStatusClass = (status) => {
 const displayPaymentMethod = (method) => {
   return method.toLowerCase() === 'credit_card' ? '信用卡' : '貨到付款';
 }
+// 2. 新增這個，用來控制按鈕顯示（這就是開發者腦中的「邏輯開關」）
+const isOnlinePaymentNeeded = computed(() => {
+  // 防呆：確保 order.value 存在
+  if (!order.value) return false;
 
+  const status = order.value.status.toLowerCase();
+  const method = order.value.paymentMethod.toLowerCase();
+
+  // 條件：狀態在待付款名單中，且「不是」貨到付款 (COD)
+  const needsPaymentStatus = ['pending', 'awaiting_payment'].includes(status);
+  const isNotCOD = (method !== 'cod');
+
+  return needsPaymentStatus && isNotCOD;
+});
 // --- 生命週期 ---
 
 onMounted(fetchOrderDetail);
