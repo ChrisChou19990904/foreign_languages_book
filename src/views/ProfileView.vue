@@ -75,7 +75,7 @@ const handleLogout = () => {
 };
 // 🎯 優化：格式化日期，讓它顯示為 2025年5月20日
 const formattedDate = computed(() => {
-  if (!createdAt.value) return '載入中...';
+  if (!createdAt.value) return '來自遠古時期的尊貴會員（系統於此階段尚未開啟時間印記功能）';
   const date = new Date(createdAt.value);
   return date.toLocaleDateString('zh-TW', {
     year: 'numeric',
