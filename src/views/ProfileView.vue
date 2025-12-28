@@ -3,7 +3,7 @@
     <div v-if="authStore.isAuthenticated" class="profile-card">
       <h2>{{ authStore.isAdmin ? '👑 管理員檔案' : '👤 會員檔案' }}</h2>
 
-      <p v-if="userName"><strong class="username">{{userName}}</strong> 歡迎回來，這裡是您的資訊中心。</p>
+      <p v-if="userName"><em class="username">{{userName}}</em> 歡迎回來，這裡是您的資訊中心。</p>
 
       <div class="info-section">
         <p>
