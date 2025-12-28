@@ -14,7 +14,7 @@
         </p>
 
         <p v-if="userEmail"><strong>電子郵件：</strong> {{ userEmail }}</p>
-
+        <p><strong>加入時間：</strong> {{ formattedDate }}</p>
         <p><strong>登入狀態：</strong>
           <span :class="{'text-success': authStore.isAuthenticated}">
             已登入
@@ -55,13 +55,14 @@ import apiClient from '@/services/apiClient'; // 🎯 引入你用來打 API 的
 // 引入 Auth Store
 const authStore = useAuthStore();
 const userName = ref('載入中...'); // 🎯 建立一個變數來存名字
-
+const createdAt = ref(null); // 🎯 新增：用來存註冊時間
 // 🎯 組件一掛載，就去問後端：「這名會員叫什麼名字？」
 onMounted(async () => {
   try {
     const response = await apiClient.get('/user/profile');
     // 假設你的後端 Response 裡那個存放 RealName 的欄位叫 username
     userName.value = response.data.username;
+    createdAt.value = response.data.createdAt; // 🎯 確保後端 DTO 有傳這個欄位
   } catch (error) {
     console.error("無法獲取用戶名稱", error);
     userName.value = '親愛的會員';
@@ -72,7 +73,16 @@ const handleLogout = () => {
   // 呼叫 Pinia Store 中的 logout action
   authStore.logout();
 };
-
+// 🎯 優化：格式化日期，讓它顯示為 2025年5月20日
+const formattedDate = computed(() => {
+  if (!createdAt.value) return '載入中...';
+  const date = new Date(createdAt.value);
+  return date.toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+});
 // 🚨 關鍵修正：直接從 Store 中讀取 Email
 const userEmail = computed(() => {
   return authStore.userEmail || 'N/A';
