@@ -1,12 +1,17 @@
 <template>
   <div class="profile-container">
     <div v-if="authStore.isAuthenticated" class="profile-card">
-      <h2>👤 會員檔案</h2>
+      <h2>{{ authStore.isAdmin ? '👑 管理員檔案' : '👤 會員檔案' }}</h2>
 
-      <p>歡迎回來，這裡是您的個人資訊中心。</p>
+      <p v-if="userName">{{userName}} 歡迎回來，這裡是您的資訊中心。</p>
 
       <div class="info-section">
-        <p><strong>帳號角色：</strong> {{ authStore.role || '未定義' }}</p>
+        <p>
+          <strong>帳號身分：</strong>
+          <span :class="authStore.isAdmin ? 'admin-text' : 'user-text'">
+            {{ authStore.isAdmin ? '系統管理員' : '一般會員' }}
+          </span>
+        </p>
 
         <p v-if="userEmail"><strong>電子郵件：</strong> {{ userEmail }}</p>
 
@@ -17,14 +22,22 @@
         </p>
       </div>
 
-      <button @click="handleLogout" class="logout-btn">
-        登出
-      </button>
-      <router-link :to="{ name: 'ProfileEdit' }" class="edit-profile-btn">
-        修改會員資料
-      </router-link>
+      <div class="button-group">
+        <button @click="handleLogout" class="logout-btn">登出</button>
+
+        <router-link :to="{ name: 'ProfileEdit' }" class="edit-profile-btn">
+          修改個人資料
+        </router-link>
+      </div>
+
+      <hr class="divider" />
+
       <div class="action-links">
-        <router-link :to="{ name: 'Orders' }">查看歷史訂單</router-link>
+        <router-link v-if="authStore.isAdmin" :to="{ name: 'AdminDashboard' }" class="admin-link">
+          🛠️ 進入後台管理系統
+        </router-link>
+
+        <router-link :to="{ name: 'Orders' }">📦 查看歷史訂單</router-link>
       </div>
 
     </div>
@@ -36,12 +49,24 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-
+import apiClient from '@/services/apiClient'; // 🎯 引入你用來打 API 的工具
 // 引入 Auth Store
 const authStore = useAuthStore();
+const userName = ref('載入中...'); // 🎯 建立一個變數來存名字
 
+// 🎯 組件一掛載，就去問後端：「這名會員叫什麼名字？」
+onMounted(async () => {
+  try {
+    const response = await apiClient.get('/user/profile');
+    // 假設你的後端 Response 裡那個存放 RealName 的欄位叫 username
+    userName.value = response.data.username;
+  } catch (error) {
+    console.error("無法獲取用戶名稱", error);
+    userName.value = '親愛的會員';
+  }
+});
 // 處理登出邏輯
 const handleLogout = () => {
   // 呼叫 Pinia Store 中的 logout action
