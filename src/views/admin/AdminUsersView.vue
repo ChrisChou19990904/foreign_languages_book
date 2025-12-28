@@ -111,7 +111,7 @@ const handleRoleChange = async (user) => {
 };
 // 🌟 新增：格式化時間的函數
 const formatDateTime = (dateStr) => {
-  if (!dateStr) return '無資料';
+  if (!dateStr) return '此會員註冊時開發者還沒創建紀錄註冊時間的功能';
   const date = new Date(dateStr);
   return date.toLocaleString('zh-TW', {
     year: 'numeric',
