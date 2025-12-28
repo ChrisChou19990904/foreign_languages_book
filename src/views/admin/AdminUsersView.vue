@@ -14,6 +14,7 @@
             <th>用戶名稱</th>
             <th>Email</th>
             <th>角色</th>
+            <th>註冊時間</th>
             <th>帳號狀態</th>
             <th>操作</th>
           </tr>
@@ -32,6 +33,11 @@
                 <option value="USER">一般會員 (USER)</option>
                 <option value="ADMIN">管理員 (ADMIN)</option>
               </select>
+            </td>
+            <td>
+              <small class="text-muted">
+                {{ formatDateTime(user.createdAt) }}
+              </small>
             </td>
             <td>
                 <span :class="['badge', user.isActive ? 'bg-success' : 'bg-secondary']">
@@ -103,7 +109,19 @@ const handleRoleChange = async (user) => {
     fetchUsers(); // 失敗時刷回原始資料
   }
 };
-
+// 🌟 新增：格式化時間的函數
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return '無資料';
+  const date = new Date(dateStr);
+  return date.toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};
 onMounted(fetchUsers);
 </script>
 
