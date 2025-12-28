@@ -39,6 +39,7 @@
             <p class="payment-hint" style="color: #2c3e50;">ℹ️ 提醒：此訂單為貨到付款，請於收件時準備現金。</p>
           </div>
         </div>
+      </div>
 
       <div class="item-list">
         <h3>🛒 訂單商品明細</h3>
