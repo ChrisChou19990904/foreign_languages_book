@@ -20,7 +20,7 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // 你的 Spring Boot 位址
+        target: 'https://foreign-languages-book-back-end-3.onrender.com', // 你的 Spring Boot 位址
         changeOrigin: true,
         // 不需要 rewrite，因為你的後端 Controller 本身就是 /api 開頭
       }
