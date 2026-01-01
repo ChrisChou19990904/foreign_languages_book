@@ -29,11 +29,12 @@ export default defineConfig({
   },
   // 🌟 必須新增此區塊，Vitest 才能讀取到你的測試
   test: {
-    globals: true,           // 支援 describe, it, expect 等全域變數
-    environment: 'jsdom',    // 模擬瀏覽器環境（Pinia 與 DOM 測試必備）
-    include: ['**/*.{test,spec}.{js,ts,jsx,tsx}'], // 強制掃描所有測試檔
+    globals: true,
+    environment: 'jsdom',
+    // 🌟 改成更明確的偵測範圍，包含 src 下的所有 test 目錄
+    include: ['src/**/*.{test,spec}.js', 'src/test/**/*.spec.js'],
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)) // 確保測試時也能辨識 @ 符號
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   }
 })
