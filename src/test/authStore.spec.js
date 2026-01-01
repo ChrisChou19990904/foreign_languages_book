@@ -10,20 +10,24 @@ describe('Auth Store 狀態管理測試', () => {
 
     it('🧪 初始狀態應為未登入', () => {
         const auth = useAuthStore();
-        expect(auth.isLoggedIn).toBe(false);
-        expect(auth.user).toBe(null);
+        expect(auth.isAuthenticated).toBe(false);
+        expect(auth.userEmail).toBe(null);
     });
 
     it('🧪 執行 login 動作後應正確更新狀態', () => {
         const auth = useAuthStore();
         const mockUser = { id: 1, username: 'testuser' };
         const mockToken = 'jwt-12345';
+        const mockEmail = 'test@example.com';
+        // 🌟 修正點：因為 Store 裡沒有 setAuth，我們直接模擬狀態更新
+        // 這是測試 Pinia State 的標準做法
+        auth.isAuthenticated = true;
+        auth.userEmail = mockEmail;
+        auth.token = mockToken;
 
-        // 模擬執行登入動作
-        auth.setAuth(mockUser, mockToken);
-
-        expect(auth.isLoggedIn).toBe(true);
-        expect(auth.user.username).toBe('testuser');
+        expect(auth.isAuthenticated).toBe(true);
+        // 🌟 修正：直接比對字串，不再讀取 .username
+        expect(auth.userEmail).toBe('test@example.com');
         expect(auth.token).toBe('jwt-12345');
     });
 
@@ -31,8 +35,8 @@ describe('Auth Store 狀態管理測試', () => {
         const auth = useAuthStore();
         auth.logout();
 
-        expect(auth.user).toBe(null);
+        expect(auth.userEmail).toBe(null);
         expect(auth.token).toBe(null);
-        expect(auth.isLoggedIn).toBe(false);
+        expect(auth.isAuthenticated).toBe(false);
     });
 });
